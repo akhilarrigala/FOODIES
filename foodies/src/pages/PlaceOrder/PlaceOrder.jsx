@@ -1,8 +1,20 @@
-import React from "react";
+import React, { useContext } from "react";
 import "./PlaceOrder.css";
 import { assets } from "../../assets/assets";
+import { StoreContext } from "../../context/storeContext";
+import { calculateCartTotals } from "../../util/cartUtil";
 
 const PlaceOrder = () => {
+  const { foodList, quantities, setQuantities } = useContext(StoreContext);
+
+  //cart items
+  const cartItems = foodList.filter(food => quantities[food.id] > 0);
+
+  //calculation part
+  const {subtotal, shipping, tax, total } = calculateCartTotals(
+    cartItems, quantities
+  );
+
   return (
     <div className="container mt-4">
       <main>
@@ -14,7 +26,7 @@ const PlaceOrder = () => {
             width="98"
             height="98"
           />
-          <h1 className="h2">Checkout form</h1>
+
           <p className="lead">
             {/* You can add a description or info about the checkout process here */}
           </p>
@@ -23,34 +35,37 @@ const PlaceOrder = () => {
           <div className="col-md-5 col-lg-4 order-md-last">
             <h4 className="d-flex justify-content-between align-items-center mb-3">
               <span className="text-primary">Your cart</span>
-              <span className="badge bg-primary rounded-pill">3</span>
+              <span className="badge bg-primary rounded-pill">{cartItems.length}</span>
             </h4>
             <ul className="list-group mb-3">
+              {cartItems.map(item => (
+                <li className="list-group-item d-flex justify-content-between lh-sm">
+                  <div>
+                    <h6 className="my-0">{item.name}</h6>
+                    <small className="text-body-secondary">Qty:{quantities[item.id]}</small>
+                  </div>
+                  <span className="text-body-secondary">&#8377;{item.price * quantities[item.id]}</span>
+                </li>
+
+              ))}
               <li className="list-group-item d-flex justify-content-between lh-sm">
                 <div>
-                  <h6 className="my-0">Product name</h6>
-                  <small className="text-body-secondary">Brief description</small>
+                  
+                  <span>Shipping</span>
                 </div>
-                <span className="text-body-secondary">$12</span>
+                <span className="text-body-secondary">&#8377;{subtotal === 0 ? 0.0 : shipping.toFixed(2)}</span>
               </li>
               <li className="list-group-item d-flex justify-content-between lh-sm">
                 <div>
-                  <h6 className="my-0">Second product</h6>
-                  <small className="text-body-secondary">Brief description</small>
+                  
+                  <span>Tax (10%)</span>
                 </div>
-                <span className="text-body-secondary">$8</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between lh-sm">
-                <div>
-                  <h6 className="my-0">Third item</h6>
-                  <small className="text-body-secondary">Brief description</small>
-                </div>
-                <span className="text-body-secondary">$5</span>
+                <span className="text-body-secondary">&#8377;{tax.toFixed(2)}</span>
               </li>
 
               <li className="list-group-item d-flex justify-content-between">
                 <span>Total (INR)</span>
-                <strong>&#8377;20</strong>
+                <strong>&#8377;{total.toFixed(2)}</strong>
               </li>
             </ul>
           </div>
@@ -96,13 +111,26 @@ const PlaceOrder = () => {
                   <div className="input-group has-validation">
                     <span className="input-group-text">@</span>
                     <input
-                      type="text"
+                      type="email"
                       className="form-control"
                       id="email"
                       placeholder="Email"
                       required
                     />
                   </div>
+                </div>
+
+                <div className="col-12">
+                  <label htmlFor="address" className="form-label">
+                    Phone Number
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    id="address"
+                    placeholder="998757354"
+                    required
+                  />
                 </div>
 
                 <div className="col-12">
@@ -146,7 +174,7 @@ const PlaceOrder = () => {
                     type="text"
                     className="form-control"
                     id="zip"
-                    placeholder=""
+                    placeholder="560573"
                     required
                   />
                 </div>
@@ -157,6 +185,7 @@ const PlaceOrder = () => {
               <button
                 className="w-100 btn btn-primary btn-lg"
                 type="submit"
+                disabled={cartItems.length === 0}
               >
                 Continue to checkout
               </button>
