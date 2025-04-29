@@ -1,0 +1,110 @@
+.cart-item {
+    display: flex;
+    align-items: center; /* Centers the items vertically */
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.cart-item .img-container {
+    flex-shrink: 0;
+    margin-right: 15px; /* Adds space between image and text */
+}
+
+.cart-item img {
+    max-width: 100px;
+    height: auto;
+    border-radius: 8px;
+}
+
+.cart-item .text-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centers the text vertically */
+    padding-left: 15px;
+    flex-grow: 1;
+}
+
+.cart-item .card-title {
+    font-size: 1.2rem; /* Slightly decreased font size for food name */
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 3px; /* Reduced gap between food name and category */
+}
+
+.cart-item .text-muted {
+    font-size: 1rem; /* Slightly decreased font size for category */
+    color: #6c757d;
+    margin: 0; /* Remove extra margins for proper alignment */
+}
+
+.cart-item .quantity-controls {
+    display: flex;
+    align-items: center; /* Ensures buttons and input are centered vertically */
+    margin-top: 10px;
+}
+
+.cart-item .quantity-controls button {
+    padding: 6px 10px;
+    font-size: 1rem;
+}
+
+.cart-item .quantity-input {
+    width: 50px;
+    text-align: center;
+    padding: 5px;
+    font-size: 1rem;
+}
+
+.cart-item .btn-outline-secondary {
+    padding: 6px 10px;
+    font-size: 1rem;
+}
+
+.cart-item .fw-bold {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.cart-item-divider {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    width: 100%;
+}
+
+.cart-summary {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.cart-summary .btn-primary {
+    padding: 12px;
+    font-size: 1.1rem;
+    background-color: #007bff;
+    border-color: #007bff;
+    border-radius: 5px;
+}
+
+.cart-summary .btn-outline-secondary {
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.cart-summary .d-flex {
+    align-items: center;
+}
+
+.cart-summary .mb-3 {
+    margin-bottom: 15px;
+}
+
+.cart-summary .btn-outline-primary {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    color: #007bff;
+    border-color: #007bff;
+}

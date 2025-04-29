@@ -1,0 +1,21 @@
+.nav-link.active {
+    font-weight: bold;
+    color: #FF6347 !important;
+    border-bottom: 2px solid #FF6347;
+}
+
+.nav-link:hover {
+    color: #FF6347 !important;
+}
+
+
+.menubar-btn:hover {
+    background-color: #FF6347;
+    color: white;
+}
+
+.navbar-toggler-icon {
+    background-color: #FF6347;
+}
+
+
