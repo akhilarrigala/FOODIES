@@ -1,4 +1,9 @@
 package com.test.foodiesapi.repository;
 
-public interface CartRepository {
+import com.test.foodiesapi.entity.FoodEntity;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CartRepository extends MongoRepository<FoodEntity, String> {
 }
