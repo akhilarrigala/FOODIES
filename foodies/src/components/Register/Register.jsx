@@ -1,43 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Register.css';
 
 const Register = () => {
+  const [data, setData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+
+  const onChangeHandler = (event) => {
+    const { name, value } = event.target;
+    setData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const onSubmitHandler = (event) => {
+    event.preventDefault();
+    // Add your form submission logic here (API call, etc.)
+    console.log('Form Submitted', data);
+  };
+
   return (
     <div className="register-container d-flex justify-content-center align-items-center">
       <div className="card border-0 shadow rounded-3">
         <div className="card-body p-4 p-sm-5">
           <h5 className="card-title text-center mb-4 fw-light fs-4">Sign Up</h5>
-          <form>
+          <form onSubmit={onSubmitHandler}>
             <div className="form-floating mb-3">
-              <input 
-                type="text" 
-                className="form-control" 
-                id="floatingName" 
-                placeholder="Full Name" 
-                required 
+              <input
+                type="text"
+                className="form-control"
+                id="floatingName"
+                name="name"
+                placeholder="Full Name"
+                value={data.name}
+                onChange={onChangeHandler}
+                required
               />
               <label htmlFor="floatingName">Full Name</label>
             </div>
 
             <div className="form-floating mb-3">
-              <input 
-                type="email" 
-                className="form-control" 
-                id="floatingEmail" 
-                placeholder="name@example.com" 
-                required 
+              <input
+                type="email"
+                className="form-control"
+                id="floatingEmail"
+                name="email"
+                placeholder="name@example.com"
+                value={data.email}
+                onChange={onChangeHandler}
+                required
               />
               <label htmlFor="floatingEmail">Email address</label>
             </div>
 
             <div className="form-floating mb-3">
-              <input 
-                type="password" 
-                className="form-control" 
-                id="floatingPassword" 
-                placeholder="Password" 
-                required 
+              <input
+                type="password"
+                className="form-control"
+                id="floatingPassword"
+                name="password"
+                placeholder="Password"
+                value={data.password}
+                onChange={onChangeHandler}
+                required
               />
               <label htmlFor="floatingPassword">Password</label>
             </div>

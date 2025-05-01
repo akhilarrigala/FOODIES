@@ -7,6 +7,7 @@ export const StoreContext = createContext(null);
 export const StoreContextProvider = (props) => {
     const [foodList, setFoodList] = useState([]);
     const [quantities, setQuantities] = useState({});
+    const [token, setToken] = useState("");
 
     // Increase the quantity of a food item in the cart
     const increaseQty = (foodId) => {
@@ -52,6 +53,8 @@ export const StoreContextProvider = (props) => {
         decreaseQty,
         quantities,
         removeFromCart,
+        token,
+        setToken
     };
 
     return (

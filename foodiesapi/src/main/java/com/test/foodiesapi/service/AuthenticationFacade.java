@@ -1,4 +1,7 @@
 package com.test.foodiesapi.service;
 
-public class AuthenticationFacade {
+import org.springframework.security.core.Authentication;
+
+public interface AuthenticationFacade {
+    Authentication getAuthentication();
 }

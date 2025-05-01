@@ -1,6 +1,5 @@
 package com.test.foodiesapi.service;
 
-
 import com.test.foodiesapi.entity.UserEntity;
 import com.test.foodiesapi.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -21,7 +20,9 @@ public class AppUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User with email " + email + " not found"));
+
+
         return new User(user.getEmail(), user.getPassword(), Collections.emptyList());
     }
 }
