@@ -8,14 +8,30 @@
     color: #FF6347 !important;
 }
 
-
 .menubar-btn:hover {
     background-color: #FF6347;
     color: white;
+    border-color: #FF6347;
+}
+
+.menubar-btn {
+    border-color: #FF6347;
+    color: #FF6347;
 }
 
 .navbar-toggler-icon {
     background-color: #FF6347;
 }
 
+.dropdown-item.dropdown-link:hover {
+    background-color: white;
+    color: #FF6347 !important;  
+}
 
+.dropdown-item.dropdown-link.active {
+    border-left: 4px solid #FF6347;
+}
+
+.dropdown-menu {
+    min-width: 160px;
+}

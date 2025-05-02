@@ -1,19 +1,142 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import "./PlaceOrder.css";
 import { assets } from "../../assets/assets";
 import { StoreContext } from "../../context/storeContext";
 import { calculateCartTotals } from "../../util/cartUtil";
+import { toast } from "react-toastify";
+import { RAZORPAY_KEY } from "../../util/contants";
+import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+
 
 const PlaceOrder = () => {
-  const { foodList, quantities, setQuantities } = useContext(StoreContext);
+  const { foodList, quantities, setQuantities, token } = useContext(StoreContext);
+  const navigate = useNavigate();
 
-  //cart items
-  const cartItems = foodList.filter(food => quantities[food.id] > 0);
+  const [data, setData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    state: '',
+    city: '',
+    zip: ''
+  });
 
-  //calculation part
-  const {subtotal, shipping, tax, total } = calculateCartTotals(
-    cartItems, quantities
-  );
+
+  const onChangeHandler = (event) => {
+    const { name, value } = event.target;
+    setData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const onSubmitHandler = async (event) => {
+    event.preventDefault();
+    console.log("Form data submitted:", data);
+    const orderData = {
+      userAddress: `${data.firstName} ${data.lastName}, ${data.address}, ${data.city}, ${data.state}, ${data.zip}`,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      orderedItems: cartItems.map(item => ({
+        foodId: item.foodId,
+        quantity: quantities[item.id],
+        price: item.price * quantities[item.id],
+        category: item.category,
+        imageUrl: item.imageUrl,
+        description: item.description,
+        name: item.name
+      })),
+      amount: total.toFixed(2),
+      orderStatus: "Preparing"
+    };
+    try {
+      const response = await axios.post('http://localhost:8081/api/orders/create', orderData, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (response.status === 201 && response.data.razorpayOrderId) {
+        //initiate the payment
+        initiateRazorpayPayment(response.data);
+      }
+      else {
+        toast.error("Unable to place an order. Please try again!");
+      }
+    } catch (error) {
+      toast.error("Unable to place an order. Please try again!");
+    }
+
+  };
+
+  const initiateRazorpayPayment = (order) => {
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: order.amount,
+      currency: "INR",
+      name: "Food Land",
+      description: "Payment for food order",
+      order_id: order.razorpayOrderId,
+      handler: async function (razorpayResponse) {
+        await verifyPayment(razorpayResponse);
+      },
+      prefill: {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        conatct: data.phoneNumber,
+      },
+      theme: { color: '#3399cc' },
+      modal: {
+        ondismiss: async function () {
+          toast.error("Payment cancelled.");
+          await deleteOrder(order.id);
+        },
+      },
+    };
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  };
+
+  const verifyPayment = async (razorpayResponse) => {
+    const paymentData = {
+      razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+      razorpay_order_id: razorpayResponse.razorpay_order_id,
+      razorpay_signature: razorpayResponse.razorpay_signature
+    };
+    try {
+      const response = await axios.post('http://localhost:8081/api/orders/verify', paymentData, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (response.status === 200) {
+        toast.success('Payment successful!');
+        await clearCart();
+        navigate('/myorders');
+      }
+      else {
+
+        toast.error('Payment failed. Please try again!');
+        navigate('/');
+      }
+    } catch (error) {
+      toast.error('Payment failed. Please try again!');
+    }
+  }
+
+  const deleteOrder = async (orderId) => {
+    try {
+      await axios.delete('http://localhost:8081/api/orders/' + orderId, { headers: { 'Authorization': `Bearer ${token}` } });
+    } catch (error) {
+      toast.error('Something went wrong. Please reach out to the support.');
+    }
+  }
+
+  const clearCart = async () => {
+    try {
+      await axios.delete('http://localhost:8081/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+      setQuantities({});
+    } catch (error) {
+      toast.error('Error while clearing the cart');
+    }
+  }
+
+
+
+
+  const cartItems = foodList.filter((food) => quantities[food.id] > 0);
+  const { subtotal, shipping, tax, total } = calculateCartTotals(cartItems, quantities);
 
   return (
     <div className="container mt-4">
@@ -22,15 +145,12 @@ const PlaceOrder = () => {
           <img
             className="d-block mx-auto mb-4"
             src={assets.logo}
-            alt=""
+            alt="Logo"
             width="98"
             height="98"
           />
-
-          <p className="lead">
-            {/* You can add a description or info about the checkout process here */}
-          </p>
         </div>
+
         <div className="row g-5">
           <div className="col-md-5 col-lg-4 order-md-last">
             <h4 className="d-flex justify-content-between align-items-center mb-3">
@@ -38,40 +158,37 @@ const PlaceOrder = () => {
               <span className="badge bg-primary rounded-pill">{cartItems.length}</span>
             </h4>
             <ul className="list-group mb-3">
-              {cartItems.map(item => (
-                <li className="list-group-item d-flex justify-content-between lh-sm">
+              {cartItems.map((item) => (
+                <li key={item.id} className="list-group-item d-flex justify-content-between lh-sm">
                   <div>
                     <h6 className="my-0">{item.name}</h6>
-                    <small className="text-body-secondary">Qty:{quantities[item.id]}</small>
+                    <small className="text-body-secondary">Qty: {quantities[item.id]}</small>
                   </div>
                   <span className="text-body-secondary">&#8377;{item.price * quantities[item.id]}</span>
                 </li>
-
               ))}
               <li className="list-group-item d-flex justify-content-between lh-sm">
                 <div>
-                  
                   <span>Shipping</span>
                 </div>
                 <span className="text-body-secondary">&#8377;{subtotal === 0 ? 0.0 : shipping.toFixed(2)}</span>
               </li>
               <li className="list-group-item d-flex justify-content-between lh-sm">
                 <div>
-                  
                   <span>Tax (10%)</span>
                 </div>
                 <span className="text-body-secondary">&#8377;{tax.toFixed(2)}</span>
               </li>
-
               <li className="list-group-item d-flex justify-content-between">
                 <span>Total (INR)</span>
                 <strong>&#8377;{total.toFixed(2)}</strong>
               </li>
             </ul>
           </div>
+
           <div className="col-md-7 col-lg-8">
             <h4 className="mb-3">Billing address</h4>
-            <form className="needs-validation" noValidate>
+            <form className="needs-validation" onSubmit={onSubmitHandler} noValidate>
               <div className="row g-3">
                 <div className="col-sm-6">
                   <label htmlFor="firstName" className="form-label">
@@ -81,13 +198,12 @@ const PlaceOrder = () => {
                     type="text"
                     className="form-control"
                     id="firstName"
-                    placeholder=""
-                    value=""
+                    name="firstName"
+                    value={data.firstName}
+                    onChange={onChangeHandler}
+                    placeholder="First name"
                     required
                   />
-                  <div className="invalid-feedback">
-                    Valid first name is required.
-                  </div>
                 </div>
 
                 <div className="col-sm-6">
@@ -98,8 +214,10 @@ const PlaceOrder = () => {
                     type="text"
                     className="form-control"
                     id="lastName"
-                    placeholder=""
-                    value=""
+                    name="lastName"
+                    value={data.lastName}
+                    onChange={onChangeHandler}
+                    placeholder="Last name"
                     required
                   />
                 </div>
@@ -114,6 +232,9 @@ const PlaceOrder = () => {
                       type="email"
                       className="form-control"
                       id="email"
+                      name="email"
+                      value={data.email}
+                      onChange={onChangeHandler}
                       placeholder="Email"
                       required
                     />
@@ -121,14 +242,17 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className="col-12">
-                  <label htmlFor="address" className="form-label">
-                    Phone Number
+                  <label htmlFor="phoneNumber" className="form-label">
+                    Phone
                   </label>
                   <input
-                    type="number"
+                    type="tel"
                     className="form-control"
-                    id="address"
-                    placeholder="998757354"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={data.phoneNumber}
+                    onChange={onChangeHandler}
+                    placeholder="Phone"
                     required
                   />
                 </div>
@@ -141,28 +265,45 @@ const PlaceOrder = () => {
                     type="text"
                     className="form-control"
                     id="address"
-                    placeholder="1234 Main St"
+                    name="address"
+                    value={data.address}
+                    onChange={onChangeHandler}
+                    placeholder="Street address"
                     required
                   />
                 </div>
 
                 <div className="col-md-5">
-                  <label htmlFor="country" className="form-label">
-                    Country
+                  <label htmlFor="state" className="form-label">
+                    State
                   </label>
-                  <select className="form-select" id="country" required>
+                  <select
+                    className="form-select"
+                    id="state"
+                    name="state"
+                    value={data.state}
+                    onChange={onChangeHandler}
+                    required
+                  >
                     <option value="">Choose...</option>
-                    <option>India</option>
+                    <option>Karnataka</option>
                   </select>
                 </div>
 
                 <div className="col-md-4">
-                  <label htmlFor="state" className="form-label">
-                    State
+                  <label htmlFor="city" className="form-label">
+                    City
                   </label>
-                  <select className="form-select" id="state" required>
+                  <select
+                    className="form-select"
+                    id="city"
+                    name="city"
+                    value={data.city}
+                    onChange={onChangeHandler}
+                    required
+                  >
                     <option value="">Choose...</option>
-                    <option>Karnataka</option>
+                    <option>Bangalore</option>
                   </select>
                 </div>
 
@@ -174,7 +315,10 @@ const PlaceOrder = () => {
                     type="text"
                     className="form-control"
                     id="zip"
-                    placeholder="560573"
+                    name="zip"
+                    value={data.zip}
+                    onChange={onChangeHandler}
+                    placeholder="Zip"
                     required
                   />
                 </div>

@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { fetchFoodList } from "../service/foodService";
+import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
 
 export const StoreContext = createContext(null);
 
@@ -10,22 +11,24 @@ export const StoreContextProvider = (props) => {
     const [token, setToken] = useState("");
 
     // Increase the quantity of a food item in the cart
-    const increaseQty = (foodId) => {
+    const increaseQty = async (foodId) => {
         setQuantities((prev) => ({
             ...prev,
             [foodId]: (prev[foodId] || 0) + 1,
         }));
+        await addToCart(foodId,token);
     };
 
     // Decrease the quantity of a food item in the cart
-    const decreaseQty = (foodId) => {
+    const decreaseQty = async (foodId) => {
         setQuantities((prev) => ({
             ...prev,
             [foodId]: prev[foodId] > 0 ? prev[foodId] - 1 : 0,
         }));
+        await removeQtyFromCart(foodId,token);
     };
 
-    // Remove a food item from the cart
+    // Remove a food item from the cart (local only)
     const removeFromCart = (foodId) => {
         setQuantities((prevQuantities) => {
             const updatedQuantities = { ...prevQuantities };
@@ -34,18 +37,32 @@ export const StoreContextProvider = (props) => {
         });
     };
 
+    // Load cart data from backend
+    const loadCartData = async () => {
+        const items = await getCartData(token);
+        setQuantities(items);
+    };
+
     // Fetch food list on initial load
     useEffect(() => {
         const loadData = async () => {
-            try {
-                const data = await fetchFoodList();
-                setFoodList(data);
-            } catch (error) {
-                console.error("Error fetching food list:", error);
+            const data = await fetchFoodList();
+            setFoodList(data);
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                setToken(storedToken);
             }
         };
+
         loadData();
     }, []);
+
+    // Load cart data when token is set
+    useEffect(() => {
+        if (token) {
+            loadCartData();
+        }
+    }, [token]);
 
     const contextValue = {
         foodList,
@@ -54,7 +71,10 @@ export const StoreContextProvider = (props) => {
         quantities,
         removeFromCart,
         token,
-        setToken
+        setToken,
+        setQuantities,
+        loadCartData
+        
     };
 
     return (

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Register.css';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import { registerUser } from '../../service/authService';
 
 const Register = () => {
+
+  const navigate = useNavigate();
   const [data, setData] = useState({
     name: '',
     email: '',
@@ -14,10 +19,22 @@ const Register = () => {
     setData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const onSubmitHandler = (event) => {
+  const onSubmitHandler = async (event) => {
     event.preventDefault();
     // Add your form submission logic here (API call, etc.)
-    console.log('Form Submitted', data);
+    // console.log('Form Submitted', data);
+    try {
+      const response = await registerUser(data);
+      if(response.status === 201){
+        toast.success('Registration successful! Please login');
+        navigate('/login');
+      } else{
+        toast.error('Unable to register. Please try again.');
+      }
+      
+    } catch (error) {
+      toast.error('Unable to register. Please try again.');
+    }
   };
 
   return (
